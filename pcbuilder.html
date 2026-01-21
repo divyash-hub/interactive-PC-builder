@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional PC Assembly Workstation</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- Professional Theme Variables --- */
+        :root {
+            --bg-color: #f0f2f5;
+            --text-primary: #1a202c;
+            --text-secondary: #718096;
+            --accent-blue: #3182ce;
+            --accent-dark: #2c5282;
+            --border-color: #e2e8f0;
+            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-popup: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1, h2, h3, .brand-font {
+            font-family: 'Roboto Slab', serif;
+        }
+
+        /* --- Custom Scrollbar --- */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+
+        /* --- Component List Items --- */
+        .component-item {
+            background: white;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+        .component-item:hover {
+            border-color: var(--accent-blue);
+            background-color: #ebf8ff;
+            transform: translateX(4px);
+        }
+
+        /* --- Floating Detail Popup (Fixed Position) --- */
+        #detail-popup {
+            position: fixed;
+            z-index: 9999;
+            width: 300px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-blue);
+            box-shadow: var(--shadow-popup);
+            border-radius: 8px;
+            padding: 0;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none; /* Default none, enabled when active via JS class */
+        }
+        
+        #detail-popup.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto; /* Allow clicking links inside */
+            transform: translateX(10px);
+        }
+
+        /* --- Schematic Canvas --- */
+        .schematic-case {
+            background-color: #fff;
+            background-image: 
+                linear-gradient(#e2e8f0 1px, transparent 1px),
+                linear-gradient(90deg, #e2e8f0 1px, transparent 1px);
+            background-size: 20px 20px;
+            border: 1px solid #cbd5e0;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.03);
+        }
+
+        .slot-target {
+            transition: all 0.2s;
+        }
+        .slot-target.highlight {
+            background-color: rgba(66, 153, 225, 0.15);
+            border: 2px dashed var(--accent-blue);
+        }
+        .slot-target.hovered {
+            background-color: rgba(66, 153, 225, 0.3);
+            transform: scale(1.02);
+        }
+
+        /* Installed Visuals */
+        .visual-installed {
+            background: white;
+            border: 1px solid #cbd5e0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+        .visual-installed:hover {
+            border-color: #e53e3e;
+            color: #e53e3e;
+        }
+
+        .tab-btn.active {
+            color: var(--accent-dark);
+            border-bottom: 2px solid var(--accent-dark);
+            background-color: #ebf8ff;
+        }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 shadow-sm z-30">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gray-800 text-white rounded flex items-center justify-center shadow-lg">
+                <i class="fa-solid fa-layer-group"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-gray-800 leading-tight">ProBuilder <span class="text-gray-400 font-sans text-sm font-normal">v2.0</span></h1>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-8">
+            <div class="text-right">
+                <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Estimated Cost</p>
+                <p class="text-xl font-bold font-mono text-gray-800" id="headerPrice">₹0</p>
+            </div>
+            <button onclick="resetBuild()" class="group flex items-center gap-2 px-4 py-2 rounded-md border border-gray-300 hover:border-red-500 hover:bg-red-50 transition text-sm font-medium text-gray-600 hover:text-red-600">
+                <i class="fa-solid fa-rotate-left group-hover:-rotate-180 transition-transform duration-500"></i> Reset
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- Sidebar -->
+        <aside class="w-[400px] bg-white border-r border-gray-200 flex flex-col z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+            <!-- Filter Bar -->
+            <div class="p-4 border-b border-gray-100 bg-gray-50/50">
+                <div class="relative group">
+                    <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400 group-focus-within:text-blue-500 transition"></i>
+                    <input type="text" placeholder="Search component catalog..." class="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition">
+                </div>
+            </div>
+
+            <!-- Categories -->
+            <div class="flex overflow-x-auto border-b border-gray-200 scrollbar-hide px-2" id="categoryTabs">
+                <!-- JS Injected -->
+            </div>
+
+            <!-- List -->
+            <div class="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-50/30" id="partsList">
+                <!-- JS Injected -->
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="flex-1 relative flex flex-col bg-[#f8fafc]">
+            
+            <!-- Info Bar -->
+            <div class="h-10 bg-white border-b border-gray-200 flex items-center justify-between px-6 text-xs text-gray-500">
+                <div class="flex gap-4">
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-mouse text-gray-400"></i> Double-click to install</span>
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-hand text-gray-400"></i> Drag & Drop supported</span>
+                </div>
+                <div class="flex gap-3">
+                    <span id="socket-badge" class="px-2 py-0.5 rounded bg-gray-100 border border-gray-200 hidden">Socket: <b id="socket-val">--</b></span>
+                    <span id="wattage-badge" class="px-2 py-0.5 rounded bg-gray-100 border border-gray-200">Power: 0W / 0W</span>
+                </div>
+            </div>
+
+            <!-- Canvas -->
+            <div class="flex-1 overflow-auto flex items-center justify-center p-8 bg-dots">
+                <div id="pcCase" class="schematic-case w-[800px] h-[700px] rounded-xl relative p-8 flex gap-8">
+                    
+                    <!-- Motherboard Tray -->
+                    <div class="flex-1 flex flex-col">
+                        <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Motherboard Mount</div>
+                        <div id="moboZone" 
+                             class="flex-1 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50/50 flex flex-col items-center justify-center relative slot-target"
+                             data-type="motherboard"
+                             ondragover="allowDrop(event)" 
+                             ondrop="handleDrop(event)">
+                            <div class="text-center pointer-events-none opacity-50">
+                                <i class="fa-solid fa-border-all text-4xl mb-2 text-gray-300"></i>
+                                <div class="text-sm font-medium text-gray-500">Empty Case</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column (Drives + PSU) -->
+                    <div class="w-64 flex flex-col gap-6">
+                        
+                        <!-- Storage -->
+                        <div class="flex-1 border border-gray-200 rounded-lg bg-white p-4 flex flex-col gap-3">
+                            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Storage Bays</div>
+                            <div class="h-20 border border-dashed border-gray-300 rounded bg-gray-50 flex items-center justify-center relative slot-target transition-colors"
+                                 data-type="storage" data-id="ssd1"
+                                 ondragover="allowDrop(event)" ondrop="handleDrop(event)">
+                                 <i class="fa-solid fa-database text-gray-300"></i>
+                            </div>
+                            <div class="h-20 border border-dashed border-gray-300 rounded bg-gray-50 flex items-center justify-center relative slot-target transition-colors"
+                                 data-type="storage" data-id="ssd2"
+                                 ondragover="allowDrop(event)" ondrop="handleDrop(event)">
+                                 <i class="fa-solid fa-database text-gray-300"></i>
+                            </div>
+                        </div>
+
+                        <!-- PSU -->
+                        <div class="h-48 border border-gray-200 rounded-lg bg-white p-4 flex flex-col">
+                            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Power Supply</div>
+                            <div id="psuZone" 
+                                 class="flex-1 border border-dashed border-gray-300 rounded bg-gray-50 flex items-center justify-center relative slot-target transition-colors"
+                                 data-type="psu"
+                                 ondragover="allowDrop(event)" ondrop="handleDrop(event)">
+                                <i class="fa-solid fa-plug text-gray-300 text-2xl"></i>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- The Independent Detail Popup -->
+    <div id="detail-popup" class="flex flex-col">
+        <!-- Content injected by JS -->
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl transform transition-all duration-300 translate-y-20 opacity-0 z-50 flex items-center gap-3">
+        <i class="icon fa-solid fa-circle-info"></i>
+        <span id="toastMsg" class="text-sm font-medium">Notification</span>
+    </div>
+
+    <script>
+        // --- 1. Database ---
+        const PARTS_DB = {
+            motherboard: [
+                { id: 'mb_rog_z790', name: 'ASUS ROG MAXIMUS Z790', price: 65000, wattage: 70, image: 'fa-microchip', specs: { socket: 'LGA1700', memory: 'DDR5', form: 'ATX' }, desc: "Flagship Intel Z790 motherboard with massive VRMs and PCIe Gen5 support." },
+                { id: 'mb_msi_b650', name: 'MSI MAG B650 TOMAHAWK', price: 22000, wattage: 50, image: 'fa-microchip', specs: { socket: 'AM5', memory: 'DDR5', form: 'ATX' }, desc: "Excellent mid-range board for AMD Ryzen 7000 series with WiFi 6E." },
+                { id: 'mb_giga_b550', name: 'Gigabyte B550 AORUS ELITE', price: 14000, wattage: 45, image: 'fa-microchip', specs: { socket: 'AM4', memory: 'DDR4', form: 'ATX' }, desc: "The go-to budget choice for Ryzen 5000 series processors." }
+            ],
+            cpu: [
+                { id: 'cpu_i9_14900k', name: 'Intel Core i9-14900K', price: 58000, wattage: 253, image: 'fa-memory', specs: { socket: 'LGA1700', cores: '24 (8P+16E)' }, desc: "Intel's fastest desktop processor. Requires robust cooling." },
+                { id: 'cpu_i5_13600k', name: 'Intel Core i5-13600K', price: 28000, wattage: 181, image: 'fa-memory', specs: { socket: 'LGA1700', cores: '14 (6P+8E)' }, desc: "The sweet spot for gaming and productivity." },
+                { id: 'cpu_r7_7800x3d', name: 'AMD Ryzen 7 7800X3D', price: 36000, wattage: 120, image: 'fa-memory', specs: { socket: 'AM5', cores: '8 Cores' }, desc: "Features 3D V-Cache technology for unbeatable gaming performance." },
+                { id: 'cpu_r5_5600x', name: 'AMD Ryzen 5 5600X', price: 13000, wattage: 65, image: 'fa-memory', specs: { socket: 'AM4', cores: '6 Cores' }, desc: "Solid 6-core performer for budget-conscious builders." }
+            ],
+            gpu: [
+                { id: 'gpu_4090', name: 'NVIDIA RTX 4090', price: 180000, wattage: 450, image: 'fa-tv', specs: { vram: '24GB G6X' }, desc: "The ultimate GPU. Handles 4K Ray Tracing with ease." },
+                { id: 'gpu_4070', name: 'NVIDIA RTX 4070 Ti', price: 75000, wattage: 285, image: 'fa-tv', specs: { vram: '12GB G6X' }, desc: "High refresh rate 1440p gaming card." },
+                { id: 'gpu_7900xtx', name: 'Radeon RX 7900 XTX', price: 98000, wattage: 355, image: 'fa-tv', specs: { vram: '24GB G6' }, desc: "AMD's most powerful GPU with massive VRAM buffer." },
+                { id: 'gpu_3060', name: 'NVIDIA RTX 3060', price: 25000, wattage: 170, image: 'fa-tv', specs: { vram: '12GB G6' }, desc: "The 1080p king. Great value for modern titles." }
+            ],
+            ram: [
+                { id: 'ram_dom_d5_32', name: 'Corsair Dominator 32GB', price: 14000, wattage: 10, image: 'fa-ruler-vertical', specs: { type: 'DDR5', speed: '6000MT/s' }, desc: "Premium DDR5 with Capellix RGB LEDs." },
+                { id: 'ram_ven_d5_16', name: 'Kingston Fury 16GB', price: 6000, wattage: 8, image: 'fa-ruler-vertical', specs: { type: 'DDR5', speed: '5200MT/s' }, desc: "Reliable, no-frills DDR5 memory." },
+                { id: 'ram_ven_d4_16', name: 'Corsair Vengeance 16GB', price: 4000, wattage: 5, image: 'fa-ruler-vertical', specs: { type: 'DDR4', speed: '3200MT/s' }, desc: "Standard DDR4 kit compatible with older platforms." }
+            ],
+            psu: [
+                { id: 'psu_1000', name: 'Corsair RM1000x', price: 16000, wattage: 1000, image: 'fa-plug', specs: { rating: '80+ Gold', type: 'Modular' }, isSource: true, desc: "Tier-A power supply. Recommended for RTX 4090 builds." },
+                { id: 'psu_850', name: 'Deepcool PM850D', price: 8500, wattage: 850, image: 'fa-plug', specs: { rating: '80+ Gold', type: 'Non-Mod' }, isSource: true, desc: "Good value gold unit for high-end PCs." },
+                { id: 'psu_650', name: 'Cooler Master MWE 650', price: 5500, wattage: 650, image: 'fa-plug', specs: { rating: '80+ Bronze', type: 'Non-Mod' }, isSource: true, desc: "Budget unit for entry-level gaming rigs." }
+            ],
+            storage: [
+                { id: 'ssd_samsung_1tb', name: 'Samsung 980 Pro 1TB', price: 8500, wattage: 5, image: 'fa-hdd', specs: { type: 'NVMe Gen4', speed: '7000MB/s' }, desc: "Top-tier SSD reliability and speed." },
+                { id: 'ssd_wd_2tb', name: 'WD Black SN850X 2TB', price: 15000, wattage: 7, image: 'fa-hdd', specs: { type: 'NVMe Gen4', speed: '7300MB/s' }, desc: "Designed for gamers with minimal load times." }
+            ]
+        };
+
+        // --- 2. State & Init ---
+        let currentBuild = { motherboard: null, cpu: null, ram: [null,null,null,null], gpu: null, psu: null, storage: { ssd1: null, ssd2: null } };
+        let activeCategory = 'motherboard';
+
+        function init() {
+            renderCategories();
+            renderCatalog(activeCategory);
+            updateStats();
+        }
+
+        function renderCategories() {
+            const tabs = document.getElementById('categoryTabs');
+            tabs.innerHTML = Object.keys(PARTS_DB).map(cat => `
+                <button onclick="switchCategory('${cat}')" class="tab-btn px-4 py-3 text-sm font-semibold capitalize text-gray-500 whitespace-nowrap hover:text-gray-800 ${activeCategory === cat ? 'active' : ''}">
+                    ${cat}
+                </button>
+            `).join('');
+        }
+
+        function switchCategory(cat) {
+            activeCategory = cat;
+            renderCategories();
+            renderCatalog(cat);
+        }
+
+        // --- 3. Catalog Rendering with Hover Logic ---
+
+        function renderCatalog(category) {
+            const container = document.getElementById('partsList');
+            const items = PARTS_DB[category];
+
+            container.innerHTML = items.map(item => `
+                <div class="component-item p-3 rounded-lg flex items-center gap-3 cursor-pointer group"
+                     draggable="true"
+                     ondragstart="handleDragStart(event, '${category}', '${item.id}')"
+                     ondblclick="handleDoubleClick('${category}', '${item.id}')"
+                     onmouseenter="showDetailPopup(event, '${category}', '${item.id}')"
+                     onmouseleave="scheduleHidePopup()"
+                >
+                    <div class="w-12 h-12 bg-gray-50 border border-gray-200 rounded flex items-center justify-center text-gray-600 group-hover:bg-white group-hover:text-blue-600 transition-colors">
+                        <i class="fa-solid ${item.image} text-lg"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-sm text-gray-800 truncate">${item.name}</div>
+                        <div class="text-xs text-gray-500 flex items-center justify-between mt-1">
+                            <span class="font-mono text-gray-700">₹${item.price.toLocaleString('en-IN')}</span>
+                            <span class="bg-gray-100 px-1.5 py-0.5 rounded text-[10px]">${item.isSource ? 'PSU' : item.wattage+'W'}</span>
+                        </div>
+                    </div>
+                    <div class="text-gray-300 group-hover:text-blue-400">
+                        <i class="fa-solid fa-circle-info"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- 4. Robust Popup Logic ---
+        
+        const popup = document.getElementById('detail-popup');
+        let popupTimeout;
+
+        // Keep popup open when hovering over the popup itself
+        popup.addEventListener('mouseenter', () => clearTimeout(popupTimeout));
+        popup.addEventListener('mouseleave', () => hidePopup());
+
+        function showDetailPopup(e, category, id) {
+            clearTimeout(popupTimeout);
+            const part = PARTS_DB[category].find(p => p.id === id);
+            if(!part) return;
+
+            // 1. Populate Content
+            const amazonUrl = `https://www.amazon.in/s?k=${encodeURIComponent(part.name)}`;
+            const specsHtml = Object.entries(part.specs).map(([k,v]) => 
+                `<div class="flex justify-between text-xs py-1 border-b border-gray-100 last:border-0"><span class="text-gray-500 capitalize">${k}</span><span class="font-medium text-gray-800">${v}</span></div>`
+            ).join('');
+
+            popup.innerHTML = `
+                <div class="p-4">
+                    <h4 class="font-bold text-gray-900 text-sm leading-tight mb-1">${part.name}</h4>
+                    <p class="text-xs text-gray-500 mb-3 leading-snug">${part.desc}</p>
+                    
+                    <div class="bg-gray-50 rounded p-2 mb-3 border border-gray-100">
+                        ${specsHtml}
+                    </div>
+
+                    <div class="flex gap-2">
+                        <a href="${amazonUrl}" target="_blank" class="flex-1 bg-[#FF9900] hover:bg-[#ffad33] text-white text-xs font-bold py-2 rounded text-center shadow-sm transition flex items-center justify-center gap-2">
+                            <i class="fa-brands fa-amazon"></i> Buy Now
+                        </a>
+                        <div class="flex-1 bg-blue-600 text-white text-xs font-bold py-2 rounded text-center shadow-sm flex items-center justify-center">
+                            ₹${part.price.toLocaleString('en-IN')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 2. Position It
+            const rect = e.currentTarget.getBoundingClientRect();
+            // Position to the right of the item
+            popup.style.top = `${rect.top}px`;
+            popup.style.left = `${rect.right + 10}px`; // 10px gap
+            
+            // Boundary Check (if too low, move up)
+            const popupHeight = 250; // Approximate
+            if (rect.top + popupHeight > window.innerHeight) {
+                popup.style.top = `${window.innerHeight - popupHeight - 20}px`;
+            }
+
+            popup.classList.add('active');
+        }
+
+        function scheduleHidePopup() {
+            // Small delay to allow moving mouse from item to popup
+            popupTimeout = setTimeout(hidePopup, 100);
+        }
+
+        function hidePopup() {
+            popup.classList.remove('active');
+        }
+
+        // --- 5. Drag & Drop Engine ---
+
+        function handleDragStart(e, category, id) {
+            e.dataTransfer.setData('application/json', JSON.stringify({ category, id }));
+            highlightTargets(category, true);
+            hidePopup(); // Hide popup on drag
+        }
+
+        function allowDrop(e) {
+            e.preventDefault();
+            const target = e.currentTarget;
+            target.classList.add('hovered');
+        }
+
+        // Cleanup hover effects
+        document.addEventListener('dragleave', (e) => {
+            if(e.target.classList && e.target.classList.contains('hovered')) {
+                e.target.classList.remove('hovered');
+            }
+        });
+
+        document.addEventListener('dragend', () => {
+            highlightTargets(null, false);
+            document.querySelectorAll('.hovered').forEach(el => el.classList.remove('hovered'));
+        });
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const target = e.currentTarget;
+            target.classList.remove('hovered');
+            highlightTargets(null, false);
+
+            const rawData = e.dataTransfer.getData('application/json');
+            if(!rawData) return;
+            
+            const { category, id } = JSON.parse(rawData);
+            attemptInstall(category, id, target);
+        }
+
+        function highlightTargets(category, isActive) {
+            document.querySelectorAll('.slot-target').forEach(el => {
+                // If specific type matches OR if it's dynamic slots inside a board
+                if (isActive && el.dataset.type === category) {
+                    el.classList.add('highlight');
+                } else {
+                    el.classList.remove('highlight');
+                }
+            });
+        }
+
+        // --- 6. Installation Logic ---
+
+        function handleDoubleClick(category, id) {
+            // Auto-find target
+            let target;
+            if (category === 'motherboard') target = document.getElementById('moboZone');
+            else if (category === 'psu') target = document.getElementById('psuZone');
+            else if (category === 'storage') target = !currentBuild.storage.ssd1 ? document.querySelector('[data-id="ssd1"]') : document.querySelector('[data-id="ssd2"]');
+            else if (category === 'cpu') target = document.querySelector('[data-type="cpu"]');
+            else if (category === 'gpu') target = document.querySelector('[data-type="gpu"]');
+            else if (category === 'ram') {
+                for(let i=0; i<4; i++) {
+                    if(!currentBuild.ram[i]) {
+                        target = document.querySelector(`[data-slot="${i}"]`);
+                        break;
+                    }
+                }
+            }
+
+            if(target) attemptInstall(category, id, target);
+            else handleError(category);
+        }
+
+        function handleError(category) {
+            if(['cpu', 'ram', 'gpu'].includes(category) && !currentBuild.motherboard) showToast('Install a Motherboard first!', 'error');
+            else if(category === 'ram') showToast('All RAM slots filled!', 'error');
+            else if(category === 'storage') showToast('All Drive bays filled!', 'error');
+        }
+
+        function attemptInstall(category, id, target) {
+            const part = PARTS_DB[category].find(p => p.id === id);
+            
+            // Compatibility Checks
+            if(['cpu','ram','gpu'].includes(category) && !currentBuild.motherboard) {
+                showToast('Need Motherboard first!', 'error'); 
+                return;
+            }
+            if(category === 'cpu' && part.specs.socket !== currentBuild.motherboard.specs.socket) {
+                showToast(`Incompatible Socket! Need ${currentBuild.motherboard.specs.socket}`, 'error');
+                return;
+            }
+            if(category === 'ram' && part.specs.type !== currentBuild.motherboard.specs.memory) {
+                showToast(`Incompatible RAM! Need ${currentBuild.motherboard.specs.memory}`, 'error');
+                return;
+            }
+
+            // Install
+            if(category === 'motherboard') {
+                if(currentBuild.motherboard) resetBuild();
+                currentBuild.motherboard = part;
+                renderMobo();
+            } else if (category === 'cpu') {
+                currentBuild.cpu = part;
+                renderMobo();
+            } else if (category === 'gpu') {
+                currentBuild.gpu = part;
+                renderMobo();
+            } else if (category === 'ram') {
+                const slot = target.dataset.slot;
+                currentBuild.ram[slot] = part;
+                renderMobo();
+            } else if (category === 'psu') {
+                currentBuild.psu = part;
+                document.getElementById('psuZone').innerHTML = renderInstalledBlock(part, 'psu');
+            } else if (category === 'storage') {
+                const sid = target.dataset.id;
+                currentBuild.storage[sid] = part;
+                target.innerHTML = renderInstalledBlock(part, 'storage', sid);
+            }
+
+            showToast(`${part.name} Installed`, 'success');
+            updateStats();
+        }
+
+        function removePart(cat, meta) {
+            if(cat === 'motherboard') {
+                if(confirm('Reset entire build?')) resetBuild();
+            } else if (cat === 'ram') {
+                currentBuild.ram[meta] = null;
+                renderMobo();
+            } else if (cat === 'storage') {
+                currentBuild.storage[meta] = null;
+                document.querySelector(`[data-id="${meta}"]`).innerHTML = `<i class="fa-solid fa-database text-gray-300"></i>`;
+            } else if (cat === 'psu') {
+                currentBuild.psu = null;
+                document.getElementById('psuZone').innerHTML = `<i class="fa-solid fa-plug text-gray-300 text-2xl"></i>`;
+            } else {
+                currentBuild[cat] = null;
+                renderMobo();
+            }
+            updateStats();
+        }
+
+        // --- 7. Render Canvas Components ---
+
+        function renderMobo() {
+            const zone = document.getElementById('moboZone');
+            const mobo = currentBuild.motherboard;
+
+            if(!mobo) {
+                zone.className = "flex-1 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50/50 flex flex-col items-center justify-center relative slot-target";
+                zone.innerHTML = `<div class="text-center pointer-events-none opacity-50"><i class="fa-solid fa-border-all text-4xl mb-2 text-gray-300"></i><div class="text-sm font-medium text-gray-500">Empty Case</div></div>`;
+                return;
+            }
+
+            // Render Board
+            zone.className = "flex-1 bg-gray-800 rounded-md relative border-4 border-gray-700 shadow-2xl overflow-hidden";
+            zone.innerHTML = `
+                <!-- Board Text -->
+                <div class="absolute top-2 left-2 text-[10px] text-gray-500 font-mono tracking-widest uppercase">${mobo.name}</div>
+                <button onclick="removePart('motherboard')" class="absolute top-2 right-2 text-red-500 hover:text-red-400"><i class="fa-solid fa-times"></i></button>
+
+                <!-- CPU Socket -->
+                <div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-32 h-32 bg-gray-700 border border-gray-500 flex items-center justify-center slot-target"
+                     data-type="cpu" ondragover="allowDrop(event)" ondrop="handleDrop(event)">
+                    ${currentBuild.cpu ? renderInstalledBlock(currentBuild.cpu, 'cpu') : `<span class="text-[9px] text-gray-400 text-center">CPU SOCKET<br>${mobo.specs.socket}</span>`}
+                </div>
+
+                <!-- RAM Slots -->
+                <div class="absolute top-1/4 right-12 h-40 flex gap-1.5">
+                    ${[0,1,2,3].map(i => `
+                        <div class="w-4 h-full bg-gray-900 border border-gray-600 slot-target"
+                             data-type="ram" data-slot="${i}" ondragover="allowDrop(event)" ondrop="handleDrop(event)">
+                             ${currentBuild.ram[i] ? `<div class="w-full h-full bg-yellow-600 border border-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.5)] cursor-pointer hover:bg-red-500 transition" onclick="removePart('ram', ${i})"></div>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+
+                <!-- GPU Slot -->
+                <div class="absolute bottom-20 left-8 right-8 h-12 bg-gray-700 border-y-2 border-gray-500 flex items-center justify-center slot-target"
+                     data-type="gpu" ondragover="allowDrop(event)" ondrop="handleDrop(event)">
+                     ${currentBuild.gpu ? renderInstalledBlock(currentBuild.gpu, 'gpu') : `<span class="text-[9px] text-gray-400">PCIe x16 SLOT</span>`}
+                </div>
+            `;
+        }
+
+        function renderInstalledBlock(part, type, meta) {
+            const metaStr = meta ? `,'${meta}'` : '';
+            return `
+                <div class="visual-installed w-full h-full flex flex-col items-center justify-center relative group cursor-pointer" onclick="removePart('${type}'${metaStr})">
+                    <div class="group-hover:opacity-0 transition-opacity flex flex-col items-center">
+                        <i class="fa-solid ${part.image} text-blue-600 mb-1"></i>
+                        <span class="text-[8px] font-bold text-center leading-none px-1">${part.name.substring(0,12)}..</span>
+                    </div>
+                    <div class="absolute inset-0 bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <i class="fa-solid fa-trash"></i>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- 8. Stats & Utilities ---
+
+        function updateStats() {
+            let cost = 0;
+            let watts = 0;
+            let maxW = 0;
+
+            const calc = p => { 
+                if(!p) return;
+                cost += p.price;
+                if(p.isSource) maxW = p.wattage;
+                else watts += p.wattage;
+            };
+
+            calc(currentBuild.motherboard);
+            calc(currentBuild.cpu);
+            calc(currentBuild.gpu);
+            calc(currentBuild.psu);
+            currentBuild.ram.forEach(calc);
+            Object.values(currentBuild.storage).forEach(calc);
+
+            document.getElementById('headerPrice').innerText = `₹${cost.toLocaleString('en-IN')}`;
+            
+            const wBadge = document.getElementById('wattage-badge');
+            wBadge.innerText = `Power: ${watts}W / ${maxW}W`;
+            
+            if(maxW > 0 && watts > maxW) wBadge.className = "px-2 py-0.5 rounded bg-red-100 border border-red-300 text-red-700 font-bold";
+            else wBadge.className = "px-2 py-0.5 rounded bg-gray-100 border border-gray-200 text-gray-600";
+
+            if(currentBuild.motherboard) {
+                document.getElementById('socket-badge').classList.remove('hidden');
+                document.getElementById('socket-val').innerText = currentBuild.motherboard.specs.socket;
+            } else {
+                document.getElementById('socket-badge').classList.add('hidden');
+            }
+        }
+
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            
+            const icon = toast.querySelector('.icon');
+            if(type === 'error') {
+                icon.className = 'icon fa-solid fa-circle-xmark text-red-400';
+            } else if (type === 'success') {
+                icon.className = 'icon fa-solid fa-circle-check text-green-400';
+            } else {
+                icon.className = 'icon fa-solid fa-circle-info text-blue-400';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+
+        function resetBuild() {
+            currentBuild = { motherboard: null, cpu: null, ram: [null,null,null,null], gpu: null, psu: null, storage: { ssd1: null, ssd2: null } };
+            document.getElementById('psuZone').innerHTML = `<i class="fa-solid fa-plug text-gray-300 text-2xl"></i>`;
+            document.querySelectorAll('[data-type="storage"]').forEach(el => el.innerHTML = `<i class="fa-solid fa-database text-gray-300"></i>`);
+            renderMobo();
+            updateStats();
+        }
+
+        init();
+    </script>
+</body>
+</html>
