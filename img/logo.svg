@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Coreframe mark: an isometric case (the frame) with its glass side lit (the core). -->
+  <rect width="32" height="32" rx="8" fill="#0f1216"/>
+  <path d="M16 5.5 25.5 11v10L16 26.5 6.5 21V11Z" fill="none" stroke="#e6edf4" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M6.5 11 16 16.5 25.5 11M16 16.5v10" fill="none" stroke="#e6edf4" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M18.4 18.6 23.1 15.9v4.6l-4.7 2.7Z" fill="#8fd3ff"/>
+</svg>

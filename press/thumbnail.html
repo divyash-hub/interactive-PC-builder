@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Coreframe thumbnail</title>
+  <!-- Renders the portfolio thumbnail with the real 3D engine. Screenshot it at 1600x1000 (or 1200x630 for social cards). -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script type="importmap">
+  { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+  </script>
+  <style>
+    :root { --bg: #0f1217; --ink: #e6edf4; --ink-2: #93a0af; --ink-3: #5f6b7a; --line: #222932; --ice: #8fd3ff; --ok: #5fd39b; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: Geist, system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow: hidden; }
+    .frame { position: relative; width: 100vw; height: 100vh; }
+    canvas { position: absolute; top: 0; right: -6vw; width: 66vw; height: 100%; display: block; -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%); mask-image: linear-gradient(90deg, transparent, #000 14%); }
+    .copy { position: absolute; left: 6.2vw; top: 0; bottom: 0; width: 42vw; display: flex; flex-direction: column; justify-content: center; gap: 2.4vw; z-index: 2; }
+    .brand { display: flex; align-items: center; gap: 1.1vw; font-size: 2vw; font-weight: 700; letter-spacing: -0.02em; }
+    .brand svg { width: 3.4vw; height: 3.4vw; }
+    h1 { margin: 0; font-size: 5.6vw; line-height: 0.98; letter-spacing: -0.045em; font-weight: 700; }
+    p { margin: 0; font-size: 1.55vw; line-height: 1.45; color: var(--ink-2); max-width: 30vw; }
+    .post { display: inline-flex; align-items: center; gap: 1.4vw; align-self: flex-start; padding: 1vw 1.4vw; border: 1px solid var(--line); border-radius: 1vw; background: rgba(21, 26, 32, .8); }
+    .leds { display: flex; gap: 1vw; margin: 0; padding: 0; list-style: none; font-size: 1vw; color: var(--ink-2); font-weight: 500; }
+    .leds li { display: flex; align-items: center; gap: .45vw; }
+    .leds li::before { content: ''; width: .55vw; height: .55vw; border-radius: 50%; background: var(--ok); box-shadow: 0 0 .7vw var(--ok); }
+    .post b { white-space: nowrap; font-size: 1.1vw; font-weight: 600; color: var(--ink); padding-left: 1.4vw; border-left: 1px solid var(--line); }
+    .tag { position: absolute; right: 2.4vw; bottom: 2.2vw; font-size: .95vw; color: var(--ink-3); z-index: 2; }
+    @media (max-aspect-ratio: 17/10) { /* 16:10 */ h1 { font-size: 6vw; } }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <canvas id="bench"></canvas>
+    <div class="copy">
+      <div class="brand">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x=".5" y=".5" width="31" height="31" rx="7.5" fill="#0f1216" stroke="#2f3843"/>
+          <path d="M16 5.5 25.5 11v10L16 26.5 6.5 21V11ZM6.5 11 16 16.5 25.5 11M16 16.5v10" fill="none" stroke="#e6edf4" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M18.4 18.6 23.1 15.9v4.6l-4.7 2.7Z" fill="#8fd3ff"/>
+        </svg>
+        Coreframe
+      </div>
+      <h1>Build your first PC in 3D.</h1>
+      <p>Pick real parts step by step, watch each one go into the case, and know it all fits before you buy.</p>
+      <div class="post">
+        <ul class="leds"><li>CPU</li><li>Memory</li><li>Graphics</li><li>Storage</li></ul>
+        <b>Boot test passed</b>
+      </div>
+    </div>
+    <span class="tag">Built with Three.js</span>
+  </div>
+  <script type="module">
+    import { createBench } from '../js/scene.js';
+    import { resolve, decodeBuild } from '../js/engine.js';
+    await document.fonts.ready;
+    const bench = createBench(document.getElementById('bench'), { theme: 'dark', still: true });
+    bench.setAutoRotate(false);
+    bench.update(resolve(decodeBuild('cpu=r7-9800x3d&mobo=x870e-e&ram=d5-32-6000&gpu=rtx5080&storage=990pro-2tb&cooler=lf3-360&psu=rm850x&case=h9flow&color=black')));
+    bench.setPowered(true);
+    setTimeout(() => { document.body.dataset.ready = '1'; }, 3600);
+  </script>
+</body>
+</html>
